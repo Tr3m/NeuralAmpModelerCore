@@ -1,6 +1,5 @@
 target_sources(NAM
-PRIVATE
-    )
+PRIVATE)
 
 add_subdirectory(dsp)
 include_directories(dsp)
