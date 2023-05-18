@@ -13,7 +13,7 @@
 #include "RecursiveLinearFilter.h"
 
 recursive_linear_filter::Base::Base(const size_t inputDegree, const size_t outputDegree)
-: dsp::DSP()
+: namdsp::DSP()
 , mInputStart(inputDegree)
 , // 1 is subtracted before first use
 mOutputStart(outputDegree)
@@ -56,7 +56,7 @@ double** recursive_linear_filter::Base::Process(double** inputs, const size_t nu
       for (auto i = 1; i < outputDegree; i++)
         out += this->mOutputCoefficients[i] * this->mOutputHistory[c][(outputStart + i) % outputDegree];
       // Prevent a NaN from jamming the filter!
-      if (isnan(out))
+      if (std::isnan(out))
         out = 0.0;
       // Store the output!
       if (outputDegree >= 1)
@@ -74,7 +74,7 @@ void recursive_linear_filter::Base::_PrepareBuffers(const size_t numChannels, co
   // Check for new channel count *before* parent class ensures they match!
   const bool newChannels = this->_GetNumChannels() != numChannels;
   // Parent implementation takes care of mOutputs and mOutputPointers
-  this->dsp::DSP::_PrepareBuffers(numChannels, numFrames);
+  this->namdsp::DSP::_PrepareBuffers(numChannels, numFrames);
   if (newChannels)
   {
     this->mInputHistory.resize(numChannels);

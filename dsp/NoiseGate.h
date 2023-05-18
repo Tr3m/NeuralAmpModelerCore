@@ -12,8 +12,10 @@
 #include <vector>
 
 #include "dsp.h"
+#include <algorithm>
+#include <cstring>
 
-namespace dsp
+namespace namdsp
 {
 namespace noise_gate
 {
@@ -135,4 +137,4 @@ private:
 };
 
 }; // namespace noise_gate
-}; // namespace dsp
+}; // namespace namdsp

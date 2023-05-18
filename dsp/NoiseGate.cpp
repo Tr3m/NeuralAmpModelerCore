@@ -20,7 +20,7 @@ double _DBToLevel(const double level)
   return pow(10.0, level / 10.0);
 }
 
-dsp::noise_gate::Trigger::Trigger()
+namdsp::noise_gate::Trigger::Trigger()
 : mParams(0.05, -60.0, 1.5, 0.002, 0.050, 0.050)
 , mSampleRate(0)
 {
@@ -31,7 +31,7 @@ double signum(const double val)
   return (0.0 < val) - (val < 0.0);
 }
 
-double** dsp::noise_gate::Trigger::Process(double** inputs, const size_t numChannels, const size_t numFrames)
+double** namdsp::noise_gate::Trigger::Process(double** inputs, const size_t numChannels, const size_t numFrames)
 {
   this->_PrepareBuffers(numChannels, numFrames);
 
@@ -54,7 +54,7 @@ double** dsp::noise_gate::Trigger::Process(double** inputs, const size_t numChan
       this->mLevel[c] =
         std::clamp(alpha * this->mLevel[c] + beta * (inputs[c][s] * inputs[c][s]), MINIMUM_LOUDNESS_POWER, 1000.0);
       const double levelDB = _LevelToDB(this->mLevel[c]);
-      if (this->mState[c] == dsp::noise_gate::Trigger::State::HOLDING)
+      if (this->mState[c] == namdsp::noise_gate::Trigger::State::HOLDING)
       {
         this->mGainReductionDB[c][s] = 0.0;
         this->mLastGainReductionDB[c] = 0.0;
@@ -62,7 +62,7 @@ double** dsp::noise_gate::Trigger::Process(double** inputs, const size_t numChan
         {
           this->mTimeHeld[c] += dt;
           if (this->mTimeHeld[c] >= maxHold)
-            this->mState[c] = dsp::noise_gate::Trigger::State::MOVING;
+            this->mState[c] = namdsp::noise_gate::Trigger::State::MOVING;
         }
         else
         {
@@ -79,7 +79,7 @@ double** dsp::noise_gate::Trigger::Process(double** inputs, const size_t numChan
           if (this->mLastGainReductionDB[c] >= 0.0)
           {
             this->mLastGainReductionDB[c] = 0.0;
-            this->mState[c] = dsp::noise_gate::Trigger::State::HOLDING;
+            this->mState[c] = namdsp::noise_gate::Trigger::State::HOLDING;
             this->mTimeHeld[c] = 0.0;
           }
         }
@@ -103,11 +103,11 @@ double** dsp::noise_gate::Trigger::Process(double** inputs, const size_t numChan
 
   // Copy input to output
   for (auto c = 0; c < numChannels; c++)
-    memcpy(this->mOutputs[c].data(), inputs[c], numFrames * sizeof(double));
+    std::memcpy(this->mOutputs[c].data(), inputs[c], numFrames * sizeof(double));
   return this->_GetPointers();
 }
 
-void dsp::noise_gate::Trigger::_PrepareBuffers(const size_t numChannels, const size_t numFrames)
+void namdsp::noise_gate::Trigger::_PrepareBuffers(const size_t numChannels, const size_t numFrames)
 {
   const size_t oldChannels = this->_GetNumChannels();
   const size_t oldFrames = this->_GetNumFrames();
@@ -125,7 +125,7 @@ void dsp::noise_gate::Trigger::_PrepareBuffers(const size_t numChannels, const s
       this->mLastGainReductionDB.resize(numChannels);
       std::fill(this->mLastGainReductionDB.begin(), this->mLastGainReductionDB.end(), maxGainReduction);
       this->mState.resize(numChannels);
-      std::fill(this->mState.begin(), this->mState.end(), dsp::noise_gate::Trigger::State::MOVING);
+      std::fill(this->mState.begin(), this->mState.end(), namdsp::noise_gate::Trigger::State::MOVING);
       this->mLevel.resize(numChannels);
       std::fill(this->mLevel.begin(), this->mLevel.end(), MINIMUM_LOUDNESS_POWER);
       this->mTimeHeld.resize(numChannels);
@@ -144,7 +144,7 @@ void dsp::noise_gate::Trigger::_PrepareBuffers(const size_t numChannels, const s
 
 // Gain========================================================================
 
-double** dsp::noise_gate::Gain::Process(double** inputs, const size_t numChannels, const size_t numFrames)
+double** namdsp::noise_gate::Gain::Process(double** inputs, const size_t numChannels, const size_t numFrames)
 {
   // Assume that SetGainReductionDB() was just called to get data from a
   // trigger. Could use listeners...

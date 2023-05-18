@@ -9,7 +9,7 @@
 
 // Version 2 DSP abstraction ==================================================
 
-namespace dsp
+namespace namdsp
 {
 class Params
 {
@@ -100,4 +100,4 @@ private:
   // Copy the end of the history back to the fron and reset mHistoryIndex
   void _RewindHistory();
 };
-}; // namespace dsp
+}; // namespace namdsp

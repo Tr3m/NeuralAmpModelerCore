@@ -1,0 +1,14 @@
+target_sources(NAM
+PRIVATE
+    ImpulseResponse.cpp
+    ImpulseResponse.h
+    NoiseGate.cpp
+    NoiseGate.h
+    RecursiveLinearFilter.cpp
+    RecursiveLinearFilter.h
+    Resample.h
+    dsp.cpp
+    dsp.h
+    wav.cpp
+    wav.h
+)

@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-namespace dsp
+namespace namdsp
 {
 namespace wav
 {
@@ -50,4 +50,4 @@ void _LoadSamples32(std::ifstream& wavFile, const int chunkSize, std::vector<flo
 // Read in a 24-bit sample and convert it to an int
 int _ReadSigned24BitInt(std::ifstream& stream);
 }; // namespace wav
-}; // namespace dsp
+}; // namespace namdsp
