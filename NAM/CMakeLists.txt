@@ -4,8 +4,8 @@ PRIVATE
     activations.h
     convnet.cpp
     convnet.h
-    dsp.cpp
-    dsp.h
+    namdsp.cpp
+    namdsp.h
     get_dsp.cpp
     lstm.cpp
     lstm.h

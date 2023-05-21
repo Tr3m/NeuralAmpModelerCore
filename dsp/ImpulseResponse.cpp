@@ -10,12 +10,12 @@
 
 #include "ImpulseResponse.h"
 
-namdsp::ImpulseResponse::ImpulseResponse(const char* fileName, const double sampleRate)
-: mWavState(namdsp::wav::LoadReturnCode::ERROR_OTHER)
+dsp::ImpulseResponse::ImpulseResponse(const char* fileName, const double sampleRate)
+: mWavState(dsp::wav::LoadReturnCode::ERROR_OTHER)
 {
   // Try to load the WAV
-  this->mWavState = namdsp::wav::Load(fileName, this->mRawAudio, this->mRawAudioSampleRate);
-  if (this->mWavState != namdsp::wav::LoadReturnCode::SUCCESS)
+  this->mWavState = dsp::wav::Load(fileName, this->mRawAudio, this->mRawAudioSampleRate);
+  if (this->mWavState != dsp::wav::LoadReturnCode::SUCCESS)
   {
     std::stringstream ss;
     ss << "Failed to load IR at " << fileName << std::endl;
@@ -25,7 +25,7 @@ namdsp::ImpulseResponse::ImpulseResponse(const char* fileName, const double samp
     this->_SetWeights(sampleRate);
 }
 
-double** namdsp::ImpulseResponse::Process(double** inputs, const size_t numChannels, const size_t numFrames)
+double** dsp::ImpulseResponse::Process(double** inputs, const size_t numChannels, const size_t numFrames)
 {
   this->_PrepareBuffers(numChannels, numFrames);
   this->_UpdateHistory(inputs, numChannels, numFrames);
@@ -44,7 +44,7 @@ double** namdsp::ImpulseResponse::Process(double** inputs, const size_t numChann
   return this->_GetPointers();
 }
 
-void namdsp::ImpulseResponse::_SetWeights(const double sampleRate)
+void dsp::ImpulseResponse::_SetWeights(const double sampleRate)
 {
   if (this->mRawAudioSampleRate == sampleRate)
   {
@@ -59,7 +59,7 @@ void namdsp::ImpulseResponse::_SetWeights(const double sampleRate)
     padded[0] = 0.0f;
     padded[padded.size() - 1] = 0.0f;
     memcpy(padded.data() + 1, this->mRawAudio.data(), this->mRawAudio.size());
-    namdsp::ResampleCubic<float>(padded, this->mRawAudioSampleRate, sampleRate, 0.0, this->mResampled);
+    dsp::ResampleCubic<float>(padded, this->mRawAudioSampleRate, sampleRate, 0.0, this->mResampled);
   }
   // Simple implementation w/ no resample...
   const size_t irLength = std::min(this->mResampled.size(), this->mMaxLength);

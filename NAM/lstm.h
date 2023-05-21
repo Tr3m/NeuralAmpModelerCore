@@ -6,7 +6,7 @@
 
 #include <Eigen/Dense>
 
-#include "dsp.h"
+#include "namdsp.h"
 #include "json.hpp"
 
 namespace lstm

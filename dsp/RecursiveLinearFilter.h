@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "dsp.h"
+#include "coredsp.h"
 #include <cmath> // pow, sin
 #include <vector>
 
@@ -18,7 +18,7 @@
 
 namespace recursive_linear_filter
 {
-class Base : public namdsp::DSP
+class Base : public dsp::DSP
 {
 public:
   Base(const size_t inputDegree, const size_t outputDegree);
@@ -47,7 +47,7 @@ protected:
   long mOutputStart;
 };
 
-class LevelParams : public namdsp::Params
+class LevelParams : public dsp::Params
 {
 public:
   LevelParams(const double gain)
@@ -73,11 +73,11 @@ public:
 
 // The same 3 params (frequency, quality, gain) describe a bunch of filters.
 // (Low shelf, high shelf, peaking)
-class BiquadParams : public namdsp::Params
+class BiquadParams : public dsp::Params
 {
 public:
   BiquadParams(const double sampleRate, const double frequency, const double quality, const double gainDB)
-  : namdsp::Params()
+  : dsp::Params()
   , mFrequency(frequency)
   , mGainDB(gainDB)
   , mQuality(quality)

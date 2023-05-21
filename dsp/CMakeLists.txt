@@ -7,8 +7,8 @@ PRIVATE
     RecursiveLinearFilter.cpp
     RecursiveLinearFilter.h
     Resample.h
-    dsp.cpp
-    dsp.h
+    coredsp.cpp
+    coredsp.h
     wav.cpp
     wav.h
 )

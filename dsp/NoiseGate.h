@@ -11,11 +11,11 @@
 #include <unordered_set>
 #include <vector>
 
-#include "dsp.h"
+#include "coredsp.h"
 #include <algorithm>
 #include <cstring>
 
-namespace namdsp
+namespace dsp
 {
 namespace noise_gate
 {
@@ -137,4 +137,4 @@ private:
 };
 
 }; // namespace noise_gate
-}; // namespace namdsp
+}; // namespace dsp

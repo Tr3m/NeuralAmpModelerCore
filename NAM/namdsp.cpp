@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "dsp.h"
+#include "namdsp.h"
 #include "json.hpp"
 #include "util.h"
 

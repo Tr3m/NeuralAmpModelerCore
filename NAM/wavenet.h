@@ -6,11 +6,11 @@
 #include "json.hpp"
 #include <Eigen/Dense>
 
-#include "dsp.h"
+#include "namdsp.h"
 
 namespace wavenet
 {
-// Rework the initialization API slightly. Merge w/ dsp.h later.
+// Rework the initialization API slightly. Merge w/ namdsp.h later.
 class _DilatedConv : public Conv1D
 {
 public:

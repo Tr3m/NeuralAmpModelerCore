@@ -12,10 +12,10 @@
 
 #include <Eigen/Dense>
 
-#include "dsp.h"
+#include "coredsp.h"
 #include "wav.h"
 
-namespace namdsp
+namespace dsp
 {
 class ImpulseResponse : public History
 {
@@ -23,7 +23,7 @@ public:
   ImpulseResponse(const char* fileName, const double sampleRate);
   double** Process(double** inputs, const size_t numChannels, const size_t numFrames) override;
   // TODO states for the IR class
-  namdsp::wav::LoadReturnCode GetWavState() const { return this->mWavState; };
+  dsp::wav::LoadReturnCode GetWavState() const { return this->mWavState; };
 
 private:
   // Set the weights, given that the plugin is running at the provided sample
@@ -31,7 +31,7 @@ private:
   void _SetWeights(const double sampleRate);
 
   // State of audio
-  namdsp::wav::LoadReturnCode mWavState;
+  dsp::wav::LoadReturnCode mWavState;
   // Keep a copy of the raw audio that was loaded so that it can be resampled
   std::vector<float> mRawAudio;
   double mRawAudioSampleRate;
@@ -42,4 +42,4 @@ private:
   // The weights
   Eigen::VectorXf mWeight;
 };
-}; // namespace namdsp
+}; // namespace dsp

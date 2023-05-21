@@ -7,23 +7,23 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "dsp.h"
+#include "coredsp.h"
 
 // ============================================================================
 // Implementation of Version 2 interface
 
-namdsp::DSP::DSP()
+dsp::DSP::DSP()
 : mOutputPointers(nullptr)
 , mOutputPointersSize(0)
 {
 }
 
-namdsp::DSP::~DSP()
+dsp::DSP::~DSP()
 {
   this->_DeallocateOutputPointers();
 };
 
-void namdsp::DSP::_AllocateOutputPointers(const size_t numChannels)
+void dsp::DSP::_AllocateOutputPointers(const size_t numChannels)
 {
   if (this->mOutputPointers != nullptr)
     throw std::runtime_error("Tried to re-allocate over non-null mOutputPointers");
@@ -33,7 +33,7 @@ void namdsp::DSP::_AllocateOutputPointers(const size_t numChannels)
   this->mOutputPointersSize = numChannels;
 }
 
-void namdsp::DSP::_DeallocateOutputPointers()
+void dsp::DSP::_DeallocateOutputPointers()
 {
   if (this->mOutputPointers != nullptr)
   {
@@ -45,14 +45,14 @@ void namdsp::DSP::_DeallocateOutputPointers()
   this->mOutputPointersSize = 0;
 }
 
-double** namdsp::DSP::_GetPointers()
+double** dsp::DSP::_GetPointers()
 {
   for (auto c = 0; c < this->_GetNumChannels(); c++)
     this->mOutputPointers[c] = this->mOutputs[c].data();
   return this->mOutputPointers;
 }
 
-void namdsp::DSP::_PrepareBuffers(const size_t numChannels, const size_t numFrames)
+void dsp::DSP::_PrepareBuffers(const size_t numChannels, const size_t numFrames)
 {
   const size_t oldFrames = this->_GetNumFrames();
   const size_t oldChannels = this->_GetNumChannels();
@@ -69,7 +69,7 @@ void namdsp::DSP::_PrepareBuffers(const size_t numChannels, const size_t numFram
       this->mOutputs[c].resize(numFrames);
 }
 
-void namdsp::DSP::_ResizePointers(const size_t numChannels)
+void dsp::DSP::_ResizePointers(const size_t numChannels)
 {
   if (this->mOutputPointersSize == numChannels)
     return;
@@ -77,19 +77,19 @@ void namdsp::DSP::_ResizePointers(const size_t numChannels)
   this->_AllocateOutputPointers(numChannels);
 }
 
-namdsp::History::History()
+dsp::History::History()
 : DSP()
 , mHistoryRequired(0)
 , mHistoryIndex(0)
 {
 }
 
-void namdsp::History::_AdvanceHistoryIndex(const size_t bufferSize)
+void dsp::History::_AdvanceHistoryIndex(const size_t bufferSize)
 {
   this->mHistoryIndex += bufferSize;
 }
 
-void namdsp::History::_EnsureHistorySize(const size_t bufferSize)
+void dsp::History::_EnsureHistorySize(const size_t bufferSize)
 {
   const size_t repeatSize = std::max(bufferSize, this->mHistoryRequired);
   const size_t requiredHistoryArraySize = 10 * repeatSize; // Just so we don't spend too much time copying back.
@@ -102,7 +102,7 @@ void namdsp::History::_EnsureHistorySize(const size_t bufferSize)
   }
 }
 
-void namdsp::History::_RewindHistory()
+void dsp::History::_RewindHistory()
 {
   // TODO memcpy?  Should be fine w/ history array being >2x the history length.
   for (size_t i = 0, j = this->mHistoryIndex - this->mHistoryRequired; i < this->mHistoryRequired; i++, j++)
@@ -110,7 +110,7 @@ void namdsp::History::_RewindHistory()
   this->mHistoryIndex = this->mHistoryRequired;
 }
 
-void namdsp::History::_UpdateHistory(double** inputs, const size_t numChannels, const size_t numFrames)
+void dsp::History::_UpdateHistory(double** inputs, const size_t numChannels, const size_t numFrames)
 {
   this->_EnsureHistorySize(numFrames);
   if (numChannels < 1)

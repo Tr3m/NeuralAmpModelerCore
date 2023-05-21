@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <unordered_set>
 
-#include "dsp.h"
+#include "namdsp.h"
 #include "json.hpp"
 #include "lstm.h"
 #include "convnet.h"
