@@ -20,7 +20,8 @@ double _DBToLevel(const double level)
   return pow(10.0, level / 10.0);
 }
 
-dsp::noise_gate::Trigger::Trigger()
+template <typename SampleType>
+dsp::noise_gate::Trigger<SampleType>::Trigger()
 : mParams(0.05, -60.0, 1.5, 0.002, 0.050, 0.050)
 , mSampleRate(0)
 {
@@ -31,20 +32,21 @@ double signum(const double val)
   return (0.0 < val) - (val < 0.0);
 }
 
-double** dsp::noise_gate::Trigger::Process(double** inputs, const size_t numChannels, const size_t numFrames)
+template <typename SampleType>
+SampleType** dsp::noise_gate::Trigger<SampleType>::Process(SampleType** inputs, const size_t numChannels, const size_t numFrames)
 {
   this->_PrepareBuffers(numChannels, numFrames);
 
   // A bunch of numbers we'll use a few times.
-  const double alpha = pow(0.5, 1.0 / (this->mParams.GetTime() * this->mSampleRate));
-  const double beta = 1.0 - alpha;
-  const double threshold = this->mParams.GetThreshold();
-  const double dt = 1.0 / this->mSampleRate;
-  const double maxHold = this->mParams.GetHoldTime();
-  const double maxGainReduction = this->_GetMaxGainReduction();
+  const SampleType alpha = pow(0.5, 1.0 / (this->mParams.GetTime() * this->mSampleRate));
+  const SampleType beta = 1.0 - alpha;
+  const SampleType threshold = this->mParams.GetThreshold();
+  const SampleType dt = 1.0 / this->mSampleRate;
+  const SampleType maxHold = this->mParams.GetHoldTime();
+  const SampleType maxGainReduction = this->_GetMaxGainReduction();
   // Amount of open or close in a sample: rate times time
-  const double dOpen = -this->_GetMaxGainReduction() / this->mParams.GetOpenTime() * dt; // >0
-  const double dClose = this->_GetMaxGainReduction() / this->mParams.GetCloseTime() * dt; // <0
+  const SampleType dOpen = -this->_GetMaxGainReduction() / this->mParams.GetOpenTime() * dt; // >0
+  const SampleType dClose = this->_GetMaxGainReduction() / this->mParams.GetCloseTime() * dt; // <0
 
   // The main algorithm: compute the gain reduction
   for (auto c = 0; c < numChannels; c++)
@@ -53,8 +55,8 @@ double** dsp::noise_gate::Trigger::Process(double** inputs, const size_t numChan
     {
       this->mLevel[c] =
         std::clamp(alpha * this->mLevel[c] + beta * (inputs[c][s] * inputs[c][s]), MINIMUM_LOUDNESS_POWER, 1000.0);
-      const double levelDB = _LevelToDB(this->mLevel[c]);
-      if (this->mState[c] == dsp::noise_gate::Trigger::State::HOLDING)
+      const SampleType levelDB = _LevelToDB(this->mLevel[c]);
+      if (this->mState[c] == dsp::noise_gate::Trigger<SampleType>::State::HOLDING)
       {
         this->mGainReductionDB[c][s] = 0.0;
         this->mLastGainReductionDB[c] = 0.0;
@@ -62,7 +64,7 @@ double** dsp::noise_gate::Trigger::Process(double** inputs, const size_t numChan
         {
           this->mTimeHeld[c] += dt;
           if (this->mTimeHeld[c] >= maxHold)
-            this->mState[c] = dsp::noise_gate::Trigger::State::MOVING;
+            this->mState[c] = dsp::noise_gate::Trigger<SampleType>::State::MOVING;
         }
         else
         {
@@ -71,21 +73,21 @@ double** dsp::noise_gate::Trigger::Process(double** inputs, const size_t numChan
       }
       else
       { // Moving
-        const double targetGainReduction = this->_GetGainReduction(levelDB);
+        const SampleType targetGainReduction = this->_GetGainReduction(levelDB);
         if (targetGainReduction > this->mLastGainReductionDB[c])
         {
-          const double dGain = std::clamp(0.5 * (targetGainReduction - this->mLastGainReductionDB[c]), 0.0, dOpen);
+          const SampleType dGain = std::clamp(0.5 * (targetGainReduction - this->mLastGainReductionDB[c]), 0.0, dOpen);
           this->mLastGainReductionDB[c] += dGain;
           if (this->mLastGainReductionDB[c] >= 0.0)
           {
             this->mLastGainReductionDB[c] = 0.0;
-            this->mState[c] = dsp::noise_gate::Trigger::State::HOLDING;
+            this->mState[c] = dsp::noise_gate::Trigger<SampleType>::State::HOLDING;
             this->mTimeHeld[c] = 0.0;
           }
         }
         else if (targetGainReduction < this->mLastGainReductionDB[c])
         {
-          const double dGain = std::clamp(0.5 * (targetGainReduction - this->mLastGainReductionDB[c]), dClose, 0.0);
+          const SampleType dGain = std::clamp(0.5 * (targetGainReduction - this->mLastGainReductionDB[c]), dClose, 0.0);
           this->mLastGainReductionDB[c] += dGain;
           if (this->mLastGainReductionDB[c] < maxGainReduction)
           {
@@ -103,29 +105,30 @@ double** dsp::noise_gate::Trigger::Process(double** inputs, const size_t numChan
 
   // Copy input to output
   for (auto c = 0; c < numChannels; c++)
-    std::memcpy(this->mOutputs[c].data(), inputs[c], numFrames * sizeof(double));
+    std::memcpy(this->mOutputs[c].data(), inputs[c], numFrames * sizeof(SampleType));
   return this->_GetPointers();
 }
 
-void dsp::noise_gate::Trigger::_PrepareBuffers(const size_t numChannels, const size_t numFrames)
+template <typename SampleType>
+void dsp::noise_gate::Trigger<SampleType>::_PrepareBuffers(const size_t numChannels, const size_t numFrames)
 {
   const size_t oldChannels = this->_GetNumChannels();
   const size_t oldFrames = this->_GetNumFrames();
-  this->DSP::_PrepareBuffers(numChannels, numFrames);
+  this->DSP<SampleType>::_PrepareBuffers(numChannels, numFrames);
 
   const bool updateChannels = numChannels != oldChannels;
   const bool updateFrames = updateChannels || numFrames != oldFrames;
 
   if (updateChannels || updateFrames)
   {
-    const double maxGainReduction = this->_GetMaxGainReduction();
+    const SampleType maxGainReduction = this->_GetMaxGainReduction();
     if (updateChannels)
     {
       this->mGainReductionDB.resize(numChannels);
       this->mLastGainReductionDB.resize(numChannels);
       std::fill(this->mLastGainReductionDB.begin(), this->mLastGainReductionDB.end(), maxGainReduction);
       this->mState.resize(numChannels);
-      std::fill(this->mState.begin(), this->mState.end(), dsp::noise_gate::Trigger::State::MOVING);
+      std::fill(this->mState.begin(), this->mState.end(), dsp::noise_gate::Trigger<SampleType>::State::MOVING);
       this->mLevel.resize(numChannels);
       std::fill(this->mLevel.begin(), this->mLevel.end(), MINIMUM_LOUDNESS_POWER);
       this->mTimeHeld.resize(numChannels);
@@ -144,7 +147,8 @@ void dsp::noise_gate::Trigger::_PrepareBuffers(const size_t numChannels, const s
 
 // Gain========================================================================
 
-double** dsp::noise_gate::Gain::Process(double** inputs, const size_t numChannels, const size_t numFrames)
+template <typename SampleType>
+SampleType** dsp::noise_gate::Gain<SampleType>::Process(SampleType** inputs, const size_t numChannels, const size_t numFrames)
 {
   // Assume that SetGainReductionDB() was just called to get data from a
   // trigger. Could use listeners...

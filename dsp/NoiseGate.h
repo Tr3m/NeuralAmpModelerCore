@@ -34,29 +34,30 @@ const double MINIMUM_LOUDNESS_POWER = pow(10.0, MINIMUM_LOUDNESS_DB / 10.0);
 // forward declaration.
 
 // The class that applies the gain reductions calculated by a trigger instance.
-class Gain : public DSP
+template <typename SampleType>
+class Gain : public DSP<SampleType>
 {
 public:
-  double** Process(double** inputs, const size_t numChannels, const size_t numFrames) override;
+  SampleType** Process(SampleType** inputs, const size_t numChannels, const size_t numFrames) override;
 
-  void SetGainReductionDB(std::vector<std::vector<double>>& gainReductionDB)
+  void SetGainReductionDB(std::vector<std::vector<SampleType>>& gainReductionDB)
   {
     this->mGainReductionDB = gainReductionDB;
   }
 
 private:
-  std::vector<std::vector<double>> mGainReductionDB;
+  std::vector<std::vector<SampleType>> mGainReductionDB;
 };
 
 // Part 1 of the noise gate: the trigger.
 // This listens to a stream of incoming audio and determines how much gain
 // to apply based on the loudness of the signal.
-
+template <typename SampleType>
 class TriggerParams
 {
 public:
-  TriggerParams(const double time, const double threshold, const double ratio, const double openTime,
-                const double holdTime, const double closeTime)
+  TriggerParams(const SampleType time, const SampleType threshold, const SampleType ratio, const SampleType openTime,
+                const SampleType holdTime, const SampleType closeTime)
   : mTime(time)
   , mThreshold(threshold)
   , mRatio(ratio)
@@ -64,40 +65,41 @@ public:
   , mHoldTime(holdTime)
   , mCloseTime(closeTime){};
 
-  double GetTime() const { return this->mTime; };
-  double GetThreshold() const { return this->mThreshold; };
-  double GetRatio() const { return this->mRatio; };
-  double GetOpenTime() const { return this->mOpenTime; };
-  double GetHoldTime() const { return this->mHoldTime; };
-  double GetCloseTime() const { return this->mCloseTime; };
+  SampleType GetTime() const { return this->mTime; };
+  SampleType GetThreshold() const { return this->mThreshold; };
+  SampleType GetRatio() const { return this->mRatio; };
+  SampleType GetOpenTime() const { return this->mOpenTime; };
+  SampleType GetHoldTime() const { return this->mHoldTime; };
+  SampleType GetCloseTime() const { return this->mCloseTime; };
 
 private:
   // The time constant for quantifying the loudness of the signal.
-  double mTime;
+  SampleType mTime;
   // The threshold at which expanssion starts
-  double mThreshold;
+  SampleType mThreshold;
   // The compression ratio.
-  double mRatio;
+  SampleType mRatio;
   // How long it takes to go from maximum gain reduction to zero.
-  double mOpenTime;
+  SampleType mOpenTime;
   // How long to stay open before starting to close.
-  double mHoldTime;
+  SampleType mHoldTime;
   // How long it takes to go from open to maximum gain reduction.
-  double mCloseTime;
+  SampleType mCloseTime;
 };
 
-class Trigger : public DSP
+template <typename SampleType>
+class Trigger : public DSP<SampleType>
 {
 public:
   Trigger();
 
-  double** Process(double** inputs, const size_t numChannels, const size_t numFrames) override;
-  std::vector<std::vector<double>> GetGainReduction() const { return this->mGainReductionDB; };
-  void SetParams(const TriggerParams& params) { this->mParams = params; };
-  void SetSampleRate(const double sampleRate) { this->mSampleRate = sampleRate; }
-  std::vector<std::vector<double>> GetGainReductionDB() const { return this->mGainReductionDB; };
+  SampleType** Process(SampleType** inputs, const size_t numChannels, const size_t numFrames) override;
+  std::vector<std::vector<SampleType>> GetGainReduction() const { return this->mGainReductionDB; };
+  void SetParams(const TriggerParams<SampleType>& params) { this->mParams = params; };
+  void SetSampleRate(const SampleType sampleRate) { this->mSampleRate = sampleRate; }
+  std::vector<std::vector<SampleType>> GetGainReductionDB() const { return this->mGainReductionDB; };
 
-  void AddListener(Gain* gain)
+  void AddListener(Gain<SampleType>* gain)
   {
     // This might be risky dropping a raw pointer, but I don't think that the
     // gain would be destructed, so probably ok.
@@ -111,29 +113,29 @@ private:
     HOLDING
   };
 
-  double _GetGainReduction(const double levelDB) const
+  SampleType _GetGainReduction(const SampleType levelDB) const
   {
-    const double threshold = this->mParams.GetThreshold();
+    const SampleType threshold = this->mParams.GetThreshold();
     // Quadratic gain reduction? :)
     return levelDB < threshold ? -(this->mParams.GetRatio()) * (levelDB - threshold) * (levelDB - threshold) : 0.0;
   }
-  double _GetMaxGainReduction() const { return this->_GetGainReduction(MINIMUM_LOUDNESS_DB); }
+  SampleType _GetMaxGainReduction() const { return this->_GetGainReduction(MINIMUM_LOUDNESS_DB); }
   virtual void _PrepareBuffers(const size_t numChannels, const size_t numFrames) override;
 
-  TriggerParams mParams;
+  TriggerParams<SampleType> mParams;
   std::vector<State> mState; // One per channel
-  std::vector<double> mLevel;
+  std::vector<SampleType> mLevel;
 
   // Hold the vectors of gain reduction for the block, in dB.
   // These can be given to the Gain object.
-  std::vector<std::vector<double>> mGainReductionDB;
-  std::vector<double> mLastGainReductionDB;
+  std::vector<std::vector<SampleType>> mGainReductionDB;
+  std::vector<SampleType> mLastGainReductionDB;
 
-  double mSampleRate;
+  SampleType mSampleRate;
   // How long we've been holding
-  std::vector<double> mTimeHeld;
+  std::vector<SampleType> mTimeHeld;
 
-  std::unordered_set<Gain*> mGainListeners;
+  std::unordered_set<Gain<SampleType>*> mGainListeners;
 };
 
 }; // namespace noise_gate

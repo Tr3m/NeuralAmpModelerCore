@@ -62,12 +62,13 @@ private:
   float _bias;
 };
 
-class ConvNet : public Buffer
+template <typename SampleType>
+class ConvNet : public Buffer<SampleType>
 {
 public:
   ConvNet(const int channels, const std::vector<int>& dilations, const bool batchnorm, const std::string activation,
           std::vector<float>& params);
-  ConvNet(const double loudness, const int channels, const std::vector<int>& dilations, const bool batchnorm,
+  ConvNet(const SampleType loudness, const int channels, const std::vector<int>& dilations, const bool batchnorm,
           const std::string activation, std::vector<float>& params);
 
 protected:

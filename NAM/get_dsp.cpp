@@ -78,13 +78,13 @@ std::vector<float> GetWeights(nlohmann::json const& j, const std::filesystem::pa
     throw std::runtime_error("Corrupted model file is missing weights.");
 }
 
-std::unique_ptr<DSP> get_dsp_legacy(const std::filesystem::path model_dir)
+std::unique_ptr<DSP<double>> get_dsp_legacy(const std::filesystem::path model_dir)
 {
   auto config_filename = model_dir / std::filesystem::path("config.json");
   return get_dsp(config_filename);
 }
 
-std::unique_ptr<DSP> get_dsp(const std::filesystem::path config_filename)
+std::unique_ptr<DSP<double>> get_dsp(const std::filesystem::path config_filename)
 {
   if (!std::filesystem::exists(config_filename))
     throw std::runtime_error("Config JSON doesn't exist!\n");
@@ -112,7 +112,7 @@ std::unique_ptr<DSP> get_dsp(const std::filesystem::path config_filename)
   {
     const int receptive_field = config["receptive_field"];
     const bool _bias = config["bias"];
-    return std::make_unique<Linear>(loudness, receptive_field, _bias, params);
+    return std::make_unique<Linear<double>>(loudness, receptive_field, _bias, params);
   }
   else if (architecture == "ConvNet")
   {
@@ -122,7 +122,7 @@ std::unique_ptr<DSP> get_dsp(const std::filesystem::path config_filename)
     for (int i = 0; i < config["dilations"].size(); i++)
       dilations.push_back(config["dilations"][i]);
     const std::string activation = config["activation"];
-    return std::make_unique<convnet::ConvNet>(loudness, channels, dilations, batchnorm, activation, params);
+    return std::make_unique<convnet::ConvNet<double>>(loudness, channels, dilations, batchnorm, activation, params);
   }
   else if (architecture == "LSTM")
   {
@@ -130,14 +130,14 @@ std::unique_ptr<DSP> get_dsp(const std::filesystem::path config_filename)
     const int input_size = config["input_size"];
     const int hidden_size = config["hidden_size"];
     auto json = nlohmann::json{};
-    return std::make_unique<lstm::LSTM>(loudness, num_layers, input_size, hidden_size, params, json);
+    return std::make_unique<lstm::LSTM<double>>(loudness, num_layers, input_size, hidden_size, params, json);
   }
   else if (architecture == "CatLSTM")
   {
     const int num_layers = config["num_layers"];
     const int input_size = config["input_size"];
     const int hidden_size = config["hidden_size"];
-    return std::make_unique<lstm::LSTM>(loudness, num_layers, input_size, hidden_size, params, config["parametric"]);
+    return std::make_unique<lstm::LSTM<double>>(loudness, num_layers, input_size, hidden_size, params, config["parametric"]);
   }
   else if (architecture == "WaveNet" || architecture == "CatWaveNet")
   {
@@ -159,7 +159,7 @@ std::unique_ptr<DSP> get_dsp(const std::filesystem::path config_filename)
     // initialization of 'wavenet::WaveNet' Solution from
     // https://stackoverflow.com/a/73956681/3768284
     auto parametric_json = architecture == "CatWaveNet" ? config["parametric"] : nlohmann::json{};
-    return std::make_unique<wavenet::WaveNet>(
+    return std::make_unique<wavenet::WaveNet<double>>(
       loudness, layer_array_params, head_scale, with_head, parametric_json, params);
   }
   else

@@ -47,15 +47,17 @@ void lstm::LSTMCell::process_(const Eigen::VectorXf& x)
     this->_xh[i + h_offset] = activations::sigmoid(this->_ifgo[i + o_offset]) * tanhf(this->_c[i]);
 }
 
-lstm::LSTM::LSTM(const int num_layers, const int input_size, const int hidden_size, std::vector<float>& params,
+template <typename SampleType>
+lstm::LSTM<SampleType>::LSTM(const int num_layers, const int input_size, const int hidden_size, std::vector<float>& params,
                  nlohmann::json& parametric)
 : LSTM(TARGET_DSP_LOUDNESS, num_layers, input_size, hidden_size, params, parametric)
 {
 }
 
-lstm::LSTM::LSTM(const double loudness, const int num_layers, const int input_size, const int hidden_size,
+template <typename SampleType>
+lstm::LSTM<SampleType>::LSTM(const SampleType loudness, const int num_layers, const int input_size, const int hidden_size,
                  std::vector<float>& params, nlohmann::json& parametric)
-: DSP(loudness)
+: DSP<SampleType>(loudness)
 {
   this->_init_parametric(parametric);
   std::vector<float>::iterator it = params.begin();
@@ -68,7 +70,8 @@ lstm::LSTM::LSTM(const double loudness, const int num_layers, const int input_si
   assert(it == params.end());
 }
 
-void lstm::LSTM::_init_parametric(nlohmann::json& parametric)
+template <typename SampleType>
+void lstm::LSTM<SampleType>::_init_parametric(nlohmann::json& parametric)
 {
   std::vector<std::string> parametric_names;
   for (nlohmann::json::iterator it = parametric.begin(); it != parametric.end(); ++it)
@@ -85,7 +88,8 @@ void lstm::LSTM::_init_parametric(nlohmann::json& parametric)
   this->_input_and_params.resize(1 + parametric.size()); // TODO amp parameters
 }
 
-void lstm::LSTM::_process_core_()
+template <typename SampleType>
+void lstm::LSTM<SampleType>::_process_core_()
 {
   // Get params into the input vector before starting
   if (this->_stale_params)
@@ -99,7 +103,8 @@ void lstm::LSTM::_process_core_()
     this->_core_dsp_output[i] = this->_process_sample(this->_input_post_gain[i]);
 }
 
-float lstm::LSTM::_process_sample(const float x)
+template <typename SampleType>
+float lstm::LSTM<SampleType>::_process_sample(const float x)
 {
   if (this->_layers.size() == 0)
     return x;

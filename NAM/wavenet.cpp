@@ -6,6 +6,7 @@
 
 #include "wavenet.h"
 
+
 wavenet::_DilatedConv::_DilatedConv(const int in_channels, const int out_channels, const int kernel_size,
                                     const int bias, const int dilation)
 {
@@ -220,17 +221,18 @@ void wavenet::_Head::_apply_activation_(Eigen::MatrixXf& x)
 }
 
 // WaveNet ====================================================================
-
-wavenet::WaveNet::WaveNet(const std::vector<wavenet::LayerArrayParams>& layer_array_params, const float head_scale,
+template <typename SampleType>
+wavenet::WaveNet<SampleType>::WaveNet(const std::vector<wavenet::LayerArrayParams>& layer_array_params, const float head_scale,
                           const bool with_head, nlohmann::json parametric, std::vector<float> params)
 : WaveNet(TARGET_DSP_LOUDNESS, layer_array_params, head_scale, with_head, parametric, params)
 {
 }
 
-wavenet::WaveNet::WaveNet(const double loudness, const std::vector<wavenet::LayerArrayParams>& layer_array_params,
+template <typename SampleType>
+wavenet::WaveNet<SampleType>::WaveNet(const SampleType loudness, const std::vector<wavenet::LayerArrayParams>& layer_array_params,
                           const float head_scale, const bool with_head, nlohmann::json parametric,
                           std::vector<float> params)
-: DSP(loudness)
+: DSP<SampleType>(loudness)
 , _num_frames(0)
 , _head_scale(head_scale)
 {
@@ -261,13 +263,15 @@ wavenet::WaveNet::WaveNet(const double loudness, const std::vector<wavenet::Laye
   this->_reset_anti_pop_();
 }
 
-void wavenet::WaveNet::finalize_(const int num_frames)
+template <typename SampleType>
+void wavenet::WaveNet<SampleType>::finalize_(const int num_frames)
 {
-  this->DSP::finalize_(num_frames);
+  this->DSP<SampleType>::finalize_(num_frames);
   this->_advance_buffers_(num_frames);
 }
 
-void wavenet::WaveNet::set_params_(std::vector<float>& params)
+template <typename SampleType>
+void wavenet::WaveNet<SampleType>::set_params_(std::vector<float>& params)
 {
   std::vector<float>::iterator it = params.begin();
   for (int i = 0; i < this->_layer_arrays.size(); i++)
@@ -288,13 +292,15 @@ void wavenet::WaveNet::set_params_(std::vector<float>& params)
   }
 }
 
-void wavenet::WaveNet::_advance_buffers_(const int num_frames)
+template <typename SampleType>
+void wavenet::WaveNet<SampleType>::_advance_buffers_(const int num_frames)
 {
   for (int i = 0; i < this->_layer_arrays.size(); i++)
     this->_layer_arrays[i].advance_buffers_(num_frames);
 }
 
-void wavenet::WaveNet::_init_parametric_(nlohmann::json& parametric)
+template <typename SampleType>
+void wavenet::WaveNet<SampleType>::_init_parametric_(nlohmann::json& parametric)
 {
   for (nlohmann::json::iterator it = parametric.begin(); it != parametric.end(); ++it)
     this->_param_names.push_back(it.key());
@@ -302,13 +308,15 @@ void wavenet::WaveNet::_init_parametric_(nlohmann::json& parametric)
   std::sort(this->_param_names.begin(), this->_param_names.end());
 }
 
-void wavenet::WaveNet::_prepare_for_frames_(const long num_frames)
+template <typename SampleType>
+void wavenet::WaveNet<SampleType>::_prepare_for_frames_(const long num_frames)
 {
   for (auto i = 0; i < this->_layer_arrays.size(); i++)
     this->_layer_arrays[i].prepare_for_frames_(num_frames);
 }
 
-void wavenet::WaveNet::_process_core_()
+template <typename SampleType>
+void wavenet::WaveNet<SampleType>::_process_core_()
 {
   const long num_frames = this->_input_post_gain.size();
   this->_set_num_frames_(num_frames);
@@ -359,7 +367,8 @@ void wavenet::WaveNet::_process_core_()
   this->_anti_pop_();
 }
 
-void wavenet::WaveNet::_set_num_frames_(const long num_frames)
+template <typename SampleType>
+void wavenet::WaveNet<SampleType>::_set_num_frames_(const long num_frames)
 {
   if (num_frames == this->_num_frames)
     return;
@@ -377,7 +386,8 @@ void wavenet::WaveNet::_set_num_frames_(const long num_frames)
   this->_num_frames = num_frames;
 }
 
-void wavenet::WaveNet::_anti_pop_()
+template <typename SampleType>
+void wavenet::WaveNet<SampleType>::_anti_pop_()
 {
   if (this->_anti_pop_countdown >= this->_anti_pop_ramp)
     return;
@@ -392,7 +402,8 @@ void wavenet::WaveNet::_anti_pop_()
   }
 }
 
-void wavenet::WaveNet::_reset_anti_pop_()
+template <typename SampleType>
+void wavenet::WaveNet<SampleType>::_reset_anti_pop_()
 {
   // You need the "real" receptive field, not the buffers.
   long receptive_field = 1;

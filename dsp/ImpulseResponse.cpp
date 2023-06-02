@@ -10,7 +10,8 @@
 
 #include "ImpulseResponse.h"
 
-dsp::ImpulseResponse::ImpulseResponse(const char* fileName, const double sampleRate)
+template <typename SampleType>
+dsp::ImpulseResponse<SampleType>::ImpulseResponse(const char* fileName, const SampleType sampleRate)
 : mWavState(dsp::wav::LoadReturnCode::ERROR_OTHER)
 {
   // Try to load the WAV
@@ -25,7 +26,8 @@ dsp::ImpulseResponse::ImpulseResponse(const char* fileName, const double sampleR
     this->_SetWeights(sampleRate);
 }
 
-double** dsp::ImpulseResponse::Process(double** inputs, const size_t numChannels, const size_t numFrames)
+template <typename SampleType>
+SampleType** dsp::ImpulseResponse<SampleType>::Process(SampleType** inputs, const size_t numChannels, const size_t numFrames)
 {
   this->_PrepareBuffers(numChannels, numFrames);
   this->_UpdateHistory(inputs, numChannels, numFrames);
@@ -44,7 +46,8 @@ double** dsp::ImpulseResponse::Process(double** inputs, const size_t numChannels
   return this->_GetPointers();
 }
 
-void dsp::ImpulseResponse::_SetWeights(const double sampleRate)
+template <typename SampleType>
+void dsp::ImpulseResponse<SampleType>::_SetWeights(const SampleType sampleRate)
 {
   if (this->mRawAudioSampleRate == sampleRate)
   {

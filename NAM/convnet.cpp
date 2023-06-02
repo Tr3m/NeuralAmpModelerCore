@@ -93,15 +93,17 @@ void convnet::_Head::process_(const Eigen::MatrixXf& input, Eigen::VectorXf& out
     output(i) = this->_bias + input.col(j).dot(this->_weight);
 }
 
-convnet::ConvNet::ConvNet(const int channels, const std::vector<int>& dilations, const bool batchnorm,
+template <typename SampleType>
+convnet::ConvNet<SampleType>::ConvNet(const int channels, const std::vector<int>& dilations, const bool batchnorm,
                           const std::string activation, std::vector<float>& params)
 : ConvNet(TARGET_DSP_LOUDNESS, channels, dilations, batchnorm, activation, params)
 {
 }
 
-convnet::ConvNet::ConvNet(const double loudness, const int channels, const std::vector<int>& dilations,
+template <typename SampleType>
+convnet::ConvNet<SampleType>::ConvNet(const SampleType loudness, const int channels, const std::vector<int>& dilations,
                           const bool batchnorm, const std::string activation, std::vector<float>& params)
-: Buffer(loudness, *std::max_element(dilations.begin(), dilations.end()))
+: Buffer<SampleType>(loudness, *std::max_element(dilations.begin(), dilations.end()))
 {
   this->_verify_params(channels, dilations, batchnorm, params.size());
   this->_blocks.resize(dilations.size());
@@ -115,7 +117,8 @@ convnet::ConvNet::ConvNet(const double loudness, const int channels, const std::
   this->_reset_anti_pop_();
 }
 
-void convnet::ConvNet::_process_core_()
+template <typename SampleType>
+void convnet::ConvNet<SampleType>::_process_core_()
 {
   this->_update_buffers_();
   // Main computation!
@@ -136,22 +139,25 @@ void convnet::ConvNet::_process_core_()
   this->_anti_pop_();
 }
 
-void convnet::ConvNet::_verify_params(const int channels, const std::vector<int>& dilations, const bool batchnorm,
+template <typename SampleType>
+void convnet::ConvNet<SampleType>::_verify_params(const int channels, const std::vector<int>& dilations, const bool batchnorm,
                                       const size_t actual_params)
 {
   // TODO
 }
 
-void convnet::ConvNet::_update_buffers_()
+template <typename SampleType>
+void convnet::ConvNet<SampleType>::_update_buffers_()
 {
-  this->Buffer::_update_buffers_();
+  this->Buffer<SampleType>::_update_buffers_();
   const long buffer_size = this->_input_buffer.size();
   this->_block_vals[0].resize(1, buffer_size);
   for (long i = 1; i < this->_block_vals.size(); i++)
     this->_block_vals[i].resize(this->_blocks[i - 1].get_out_channels(), buffer_size);
 }
 
-void convnet::ConvNet::_rewind_buffers_()
+template <typename SampleType>
+void convnet::ConvNet<SampleType>::_rewind_buffers_()
 {
   // Need to rewind the block vals first because Buffer::rewind_buffers()
   // resets the offset index
@@ -168,10 +174,11 @@ void convnet::ConvNet::_rewind_buffers_()
         this->_block_vals[k](r, i) = this->_block_vals[k](r, j);
   }
   // Now we can do the rest of the rewind
-  this->Buffer::_rewind_buffers_();
+  this->Buffer<SampleType>::_rewind_buffers_();
 }
 
-void convnet::ConvNet::_anti_pop_()
+template <typename SampleType>
+void convnet::ConvNet<SampleType>::_anti_pop_()
 {
   if (this->_anti_pop_countdown >= this->_anti_pop_ramp)
     return;
@@ -186,7 +193,8 @@ void convnet::ConvNet::_anti_pop_()
   }
 }
 
-void convnet::ConvNet::_reset_anti_pop_()
+template <typename SampleType>
+void convnet::ConvNet<SampleType>::_reset_anti_pop_()
 {
   // You need the "real" receptive field, not the buffers.
   long receptive_field = 1;

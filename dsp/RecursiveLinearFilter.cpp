@@ -12,8 +12,9 @@
 
 #include "RecursiveLinearFilter.h"
 
-recursive_linear_filter::Base::Base(const size_t inputDegree, const size_t outputDegree)
-: dsp::DSP()
+template <typename SampleType>
+recursive_linear_filter::Base<SampleType>::Base(const size_t inputDegree, const size_t outputDegree)
+: dsp::DSP<SampleType>()
 , mInputStart(inputDegree)
 , // 1 is subtracted before first use
 mOutputStart(outputDegree)
@@ -22,7 +23,8 @@ mOutputStart(outputDegree)
   this->mOutputCoefficients.resize(outputDegree);
 }
 
-double** recursive_linear_filter::Base::Process(double** inputs, const size_t numChannels, const size_t numFrames)
+template <typename SampleType>
+SampleType** recursive_linear_filter::Base<SampleType>::Process(SampleType** inputs, const size_t numChannels, const size_t numFrames)
 {
   this->_PrepareBuffers(numChannels, numFrames);
   long inputStart = 0;
@@ -40,7 +42,7 @@ double** recursive_linear_filter::Base::Process(double** inputs, const size_t nu
     outputStart = this->mOutputStart;
     for (auto s = 0; s < numFrames; s++)
     {
-      double out = 0.0;
+      SampleType out = 0.0;
       // Compute input terms
       inputStart -= 1;
       if (inputStart < 0)
@@ -69,12 +71,13 @@ double** recursive_linear_filter::Base::Process(double** inputs, const size_t nu
   return this->_GetPointers();
 }
 
-void recursive_linear_filter::Base::_PrepareBuffers(const size_t numChannels, const size_t numFrames)
+template <typename SampleType>
+void recursive_linear_filter::Base<SampleType>::_PrepareBuffers(const size_t numChannels, const size_t numFrames)
 {
   // Check for new channel count *before* parent class ensures they match!
   const bool newChannels = this->_GetNumChannels() != numChannels;
   // Parent implementation takes care of mOutputs and mOutputPointers
-  this->dsp::DSP::_PrepareBuffers(numChannels, numFrames);
+  this->dsp::DSP<SampleType>::_PrepareBuffers(numChannels, numFrames);
   if (newChannels)
   {
     this->mInputHistory.resize(numChannels);
@@ -91,8 +94,9 @@ void recursive_linear_filter::Base::_PrepareBuffers(const size_t numChannels, co
   }
 }
 
-void recursive_linear_filter::Biquad::_AssignCoefficients(const double a0, const double a1, const double a2,
-                                                          const double b0, const double b1, const double b2)
+template <typename SampleType>
+void recursive_linear_filter::Biquad<SampleType>::_AssignCoefficients(const SampleType a0, const SampleType a1, const SampleType a2,
+                                                          const SampleType b0, const SampleType b1, const SampleType b2)
 {
   this->mInputCoefficients[0] = b0 / a0;
   this->mInputCoefficients[1] = b1 / a0;
@@ -103,61 +107,64 @@ void recursive_linear_filter::Biquad::_AssignCoefficients(const double a0, const
   this->mOutputCoefficients[2] = -a2 / a0;
 }
 
-void recursive_linear_filter::LowShelf::SetParams(const recursive_linear_filter::BiquadParams& params)
+template <typename SampleType>
+void recursive_linear_filter::LowShelf<SampleType>::SetParams(const recursive_linear_filter::BiquadParams<SampleType>& params)
 {
-  const double a = params.GetA();
-  const double omega_0 = params.GetOmega0();
-  const double alpha = params.GetAlpha(omega_0);
-  const double cosw = params.GetCosW(omega_0);
+  const SampleType a = params.GetA();
+  const SampleType omega_0 = params.GetOmega0();
+  const SampleType alpha = params.GetAlpha(omega_0);
+  const SampleType cosw = params.GetCosW(omega_0);
 
-  const double ap = a + 1.0;
-  const double am = a - 1.0;
-  const double roota2alpha = 2.0 * sqrt(a) * alpha;
+  const SampleType ap = a + 1.0;
+  const SampleType am = a - 1.0;
+  const SampleType roota2alpha = 2.0 * sqrt(a) * alpha;
 
-  const double b0 = a * (ap - am * cosw + roota2alpha);
-  const double b1 = 2.0 * a * (am - ap * cosw);
-  const double b2 = a * (ap - am * cosw - roota2alpha);
-  const double a0 = ap + am * cosw + roota2alpha;
-  const double a1 = -2.0 * (am + ap * cosw);
-  const double a2 = ap + am * cosw - roota2alpha;
+  const SampleType b0 = a * (ap - am * cosw + roota2alpha);
+  const SampleType b1 = 2.0 * a * (am - ap * cosw);
+  const SampleType b2 = a * (ap - am * cosw - roota2alpha);
+  const SampleType a0 = ap + am * cosw + roota2alpha;
+  const SampleType a1 = -2.0 * (am + ap * cosw);
+  const SampleType a2 = ap + am * cosw - roota2alpha;
 
   this->_AssignCoefficients(a0, a1, a2, b0, b1, b2);
 }
 
-void recursive_linear_filter::Peaking::SetParams(const recursive_linear_filter::BiquadParams& params)
+template <typename SampleType>
+void recursive_linear_filter::Peaking<SampleType>::SetParams(const recursive_linear_filter::BiquadParams<SampleType>& params)
 {
-  const double a = params.GetA();
-  const double omega_0 = params.GetOmega0();
-  const double alpha = params.GetAlpha(omega_0);
-  const double cosw = params.GetCosW(omega_0);
+  const SampleType a = params.GetA();
+  const SampleType omega_0 = params.GetOmega0();
+  const SampleType alpha = params.GetAlpha(omega_0);
+  const SampleType cosw = params.GetCosW(omega_0);
 
-  const double b0 = 1.0 + alpha * a;
-  const double b1 = -2.0 * cosw;
-  const double b2 = 1.0 - alpha * a;
-  const double a0 = 1.0 + alpha / a;
-  const double a1 = -2.0 * cosw;
-  const double a2 = 1.0 - alpha / a;
+  const SampleType b0 = 1.0 + alpha * a;
+  const SampleType b1 = -2.0 * cosw;
+  const SampleType b2 = 1.0 - alpha * a;
+  const SampleType a0 = 1.0 + alpha / a;
+  const SampleType a1 = -2.0 * cosw;
+  const SampleType a2 = 1.0 - alpha / a;
 
   this->_AssignCoefficients(a0, a1, a2, b0, b1, b2);
 }
 
-void recursive_linear_filter::HighShelf::SetParams(const recursive_linear_filter::BiquadParams& params)
+template <typename SampleType>
+void recursive_linear_filter::HighShelf<SampleType>::SetParams(const recursive_linear_filter::BiquadParams<SampleType>& params)
 {
-  const double a = params.GetA();
-  const double omega_0 = params.GetOmega0();
-  const double alpha = params.GetAlpha(omega_0);
-  const double cosw = params.GetCosW(omega_0);
+  const SampleType a = params.GetA();
+  const SampleType omega_0 = params.GetOmega0();
+  const SampleType alpha = params.GetAlpha(omega_0);
+  const SampleType cosw = params.GetCosW(omega_0);
 
-  const double roota2alpha = 2.0 * sqrt(a) * alpha;
-  const double ap = a + 1.0;
-  const double am = a - 1.0;
+  const SampleType roota2alpha = 2.0 * sqrt(a) * alpha;
+  const SampleType ap = a + 1.0;
+  const SampleType am = a - 1.0;
 
-  const double b0 = a * (ap + am * cosw + roota2alpha);
-  const double b1 = -2.0 * a * (am + ap * cosw);
-  const double b2 = a * (ap + am * cosw - roota2alpha);
-  const double a0 = ap - am * cosw + roota2alpha;
-  const double a1 = 2.0 * (am - ap * cosw);
-  const double a2 = ap - am * cosw - roota2alpha;
+  const SampleType b0 = a * (ap + am * cosw + roota2alpha);
+  const SampleType b1 = -2.0 * a * (am + ap * cosw);
+  const SampleType b2 = a * (ap + am * cosw - roota2alpha);
+  const SampleType a0 = ap - am * cosw + roota2alpha;
+  const SampleType a1 = 2.0 * (am - ap * cosw);
+  const SampleType a2 = ap - am * cosw - roota2alpha;
 
   this->_AssignCoefficients(a0, a1, a2, b0, b1, b2);
 }

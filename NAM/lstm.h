@@ -46,12 +46,13 @@ private:
 };
 
 // The multi-layer LSTM model
-class LSTM : public DSP
+template <typename SampleType>
+class LSTM : public DSP<SampleType>
 {
 public:
   LSTM(const int num_layers, const int input_size, const int hidden_size, std::vector<float>& params,
        nlohmann::json& parametric);
-  LSTM(const double loudness, const int num_layers, const int input_size, const int hidden_size,
+  LSTM(const SampleType loudness, const int num_layers, const int input_size, const int hidden_size,
        std::vector<float>& params, nlohmann::json& parametric);
   ~LSTM() = default;
 

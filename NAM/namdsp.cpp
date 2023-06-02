@@ -16,23 +16,26 @@
 
 constexpr const long _INPUT_BUFFER_SAFETY_FACTOR = 32;
 
-DSP::DSP()
+template <typename SampleType>
+DSP<SampleType>::DSP()
 : mLoudness(TARGET_DSP_LOUDNESS)
 , mNormalizeOutputLoudness(false)
 , _stale_params(true)
 {
 }
 
-DSP::DSP(const double loudness)
+template <typename SampleType>
+DSP<SampleType>::DSP(const SampleType loudness)
 : mLoudness(loudness)
 , mNormalizeOutputLoudness(false)
 , _stale_params(true)
 {
 }
 
-void DSP::process(double** inputs, double** outputs, const int num_channels, const int num_frames,
-                  const double input_gain, const double output_gain,
-                  const std::unordered_map<std::string, double>& params)
+template <typename SampleType>
+void DSP<SampleType>::process(SampleType** inputs, SampleType** outputs, const int num_channels, const int num_frames,
+                  const SampleType input_gain, const SampleType output_gain,
+                  const std::unordered_map<std::string, SampleType>& params)
 {
   this->_get_params_(params);
   this->_apply_input_level_(inputs, num_channels, num_frames, input_gain);
@@ -41,9 +44,11 @@ void DSP::process(double** inputs, double** outputs, const int num_channels, con
   this->_apply_output_level_(outputs, num_channels, num_frames, output_gain);
 }
 
-void DSP::finalize_(const int num_frames) {}
+template <typename SampleType>
+void DSP<SampleType>::finalize_(const int num_frames) {}
 
-void DSP::_get_params_(const std::unordered_map<std::string, double>& input_params)
+template <typename SampleType>
+void DSP<SampleType>::_get_params_(const std::unordered_map<std::string, SampleType>& input_params)
 {
   this->_stale_params = false;
   for (auto it = input_params.begin(); it != input_params.end(); ++it)
@@ -58,7 +63,8 @@ void DSP::_get_params_(const std::unordered_map<std::string, double>& input_para
   }
 }
 
-void DSP::_apply_input_level_(double** inputs, const int num_channels, const int num_frames, const double gain)
+template <typename SampleType>
+void DSP<SampleType>::_apply_input_level_(SampleType** inputs, const int num_channels, const int num_frames, const SampleType gain)
 {
   // Must match exactly; we're going to use the size of _input_post_gain later
   // for num_frames.
@@ -70,20 +76,23 @@ void DSP::_apply_input_level_(double** inputs, const int num_channels, const int
     this->_input_post_gain[i] = float(gain * inputs[channel][i]);
 }
 
-void DSP::_ensure_core_dsp_output_ready_()
+template <typename SampleType>
+void DSP<SampleType>::_ensure_core_dsp_output_ready_()
 {
   if (this->_core_dsp_output.size() < this->_input_post_gain.size())
     this->_core_dsp_output.resize(this->_input_post_gain.size());
 }
 
-void DSP::_process_core_()
+template <typename SampleType>
+void DSP<SampleType>::_process_core_()
 {
   // Default implementation is the null operation
   for (int i = 0; i < this->_input_post_gain.size(); i++)
     this->_core_dsp_output[i] = this->_input_post_gain[i];
 }
 
-void DSP::_apply_output_level_(double** outputs, const int num_channels, const int num_frames, const double gain)
+template <typename SampleType>
+void DSP<SampleType>::_apply_output_level_(SampleType** outputs, const int num_channels, const int num_frames, const SampleType gain)
 {
   const double loudnessGain = pow(10.0, -(this->mLoudness - TARGET_DSP_LOUDNESS) / 20.0);
   const double finalGain = this->mNormalizeOutputLoudness ? gain * loudnessGain : gain;
@@ -94,30 +103,35 @@ void DSP::_apply_output_level_(double** outputs, const int num_channels, const i
 
 // Buffer =====================================================================
 
-Buffer::Buffer(const int receptive_field)
+template <typename SampleType>
+Buffer<SampleType>::Buffer(const int receptive_field)
 : Buffer(TARGET_DSP_LOUDNESS, receptive_field)
 {
 }
 
-Buffer::Buffer(const double loudness, const int receptive_field)
-: DSP(loudness)
+template <typename SampleType>
+Buffer<SampleType>::Buffer(const double loudness, const int receptive_field)
+: DSP<SampleType>(loudness)
 {
   this->_set_receptive_field(receptive_field);
 }
 
-void Buffer::_set_receptive_field(const int new_receptive_field)
+template <typename SampleType>
+void Buffer<SampleType>::_set_receptive_field(const int new_receptive_field)
 {
   this->_set_receptive_field(new_receptive_field, _INPUT_BUFFER_SAFETY_FACTOR * new_receptive_field);
 };
 
-void Buffer::_set_receptive_field(const int new_receptive_field, const int input_buffer_size)
+template <typename SampleType>
+void Buffer<SampleType>::_set_receptive_field(const int new_receptive_field, const int input_buffer_size)
 {
   this->_receptive_field = new_receptive_field;
   this->_input_buffer.resize(input_buffer_size);
   this->_reset_input_buffer();
 }
 
-void Buffer::_update_buffers_()
+template <typename SampleType>
+void Buffer<SampleType>::_update_buffers_()
 {
   const long int num_frames = this->_input_post_gain.size();
   // Make sure that the buffer is big enough for the receptive field and the
@@ -144,7 +158,8 @@ void Buffer::_update_buffers_()
   this->_output_buffer.resize(num_frames);
 }
 
-void Buffer::_rewind_buffers_()
+template <typename SampleType>
+void Buffer<SampleType>::_rewind_buffers_()
 {
   // Copy the input buffer back
   // RF-1 samples because we've got at least one new one inbound.
@@ -158,26 +173,30 @@ void Buffer::_rewind_buffers_()
   this->_input_buffer_offset = this->_receptive_field;
 }
 
-void Buffer::_reset_input_buffer()
+template <typename SampleType>
+void Buffer<SampleType>::_reset_input_buffer()
 {
   this->_input_buffer_offset = this->_receptive_field;
 }
 
-void Buffer::finalize_(const int num_frames)
+template <typename SampleType>
+void Buffer<SampleType>::finalize_(const int num_frames)
 {
-  this->DSP::finalize_(num_frames);
+  this->DSP<SampleType>::finalize_(num_frames);
   this->_input_buffer_offset += num_frames;
 }
 
 // Linear =====================================================================
 
-Linear::Linear(const int receptive_field, const bool _bias, const std::vector<float>& params)
+template <typename SampleType>
+Linear<SampleType>::Linear(const int receptive_field, const bool _bias, const std::vector<float>& params)
 : Linear(TARGET_DSP_LOUDNESS, receptive_field, _bias, params)
 {
 }
 
-Linear::Linear(const double loudness, const int receptive_field, const bool _bias, const std::vector<float>& params)
-: Buffer(loudness, receptive_field)
+template <typename SampleType>
+Linear<SampleType>::Linear(const SampleType loudness, const int receptive_field, const bool _bias, const std::vector<float>& params)
+: Buffer<SampleType>(loudness, receptive_field)
 {
   if (params.size() != (receptive_field + (_bias ? 1 : 0)))
     throw std::runtime_error(
@@ -191,9 +210,10 @@ Linear::Linear(const double loudness, const int receptive_field, const bool _bia
   this->_bias = _bias ? params[receptive_field] : (float)0.0;
 }
 
-void Linear::_process_core_()
+template <typename SampleType>
+void Linear<SampleType>::_process_core_()
 {
-  this->Buffer::_update_buffers_();
+  this->Buffer<SampleType>::_update_buffers_();
 
   // Main computation!
   for (long i = 0; i < this->_input_post_gain.size(); i++)

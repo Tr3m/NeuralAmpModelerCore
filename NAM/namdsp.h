@@ -35,11 +35,12 @@ public:
 // How loud do we want the models to be? in dB
 #define TARGET_DSP_LOUDNESS -18.0
 
+template <typename SampleType>
 class DSP
 {
 public:
   DSP();
-  DSP(const double loudness);
+  DSP(const SampleType loudness);
   virtual ~DSP() = default;
   // process() does all of the processing requried to take `inputs` array and
   // fill in the required values on `outputs`.
@@ -50,9 +51,9 @@ public:
   // 3. The core DSP algorithm is run (This is what should probably be
   //    overridden in subclasses).
   // 4. The output level is applied and the result stored to `output`.
-  virtual void process(double** inputs, double** outputs, const int num_channels, const int num_frames,
-                       const double input_gain, const double output_gain,
-                       const std::unordered_map<std::string, double>& params);
+  virtual void process(SampleType** inputs, SampleType** outputs, const int num_channels, const int num_frames,
+                       const SampleType input_gain, const SampleType output_gain,
+                       const std::unordered_map<std::string, SampleType>& params);
   // Anything to take care of before next buffer comes in.
   // For example:
   // * Move the buffer index forward
@@ -65,7 +66,7 @@ public:
 
 protected:
   // How loud is the model?
-  double mLoudness;
+  SampleType mLoudness;
   // Should we normalize according to this loudness?
   bool mNormalizeOutputLoudness;
   // Parameters (aka "knobs")
@@ -82,11 +83,11 @@ protected:
   // Copy the parameters to the DSP module.
   // If anything has changed, then set this->_stale_params to true.
   // (TODO use "listener" approach)
-  void _get_params_(const std::unordered_map<std::string, double>& input_params);
+  void _get_params_(const std::unordered_map<std::string, SampleType>& input_params);
 
   // Apply the input gain
   // Result populates this->_input_post_gain
-  void _apply_input_level_(double** inputs, const int num_channels, const int num_frames, const double gain);
+  void _apply_input_level_(SampleType** inputs, const int num_channels, const int num_frames, const SampleType gain);
 
   // i.e. ensure the size is correct.
   void _ensure_core_dsp_output_ready_();
@@ -97,13 +98,14 @@ protected:
   virtual void _process_core_();
 
   // Copy this->_core_dsp_output to output and apply the output volume
-  void _apply_output_level_(double** outputs, const int num_channels, const int num_frames, const double gain);
+  void _apply_output_level_(SampleType** outputs, const int num_channels, const int num_frames, const SampleType gain);
 };
 
 // Class where an input buffer is kept so that long-time effects can be
 // captured. (e.g. conv nets or impulse responses, where we need history that's
 // longer than the sample buffer that's coming in.)
-class Buffer : public DSP
+template <typename SampleType>
+class Buffer : public DSP<SampleType>
 {
 public:
   Buffer(const int receptive_field);
@@ -128,11 +130,12 @@ protected:
 };
 
 // Basic linear model (an IR!)
-class Linear : public Buffer
+template <typename SampleType>
+class Linear : public Buffer<SampleType>
 {
 public:
   Linear(const int receptive_field, const bool _bias, const std::vector<float>& params);
-  Linear(const double loudness, const int receptive_field, const bool _bias, const std::vector<float>& params);
+  Linear(const SampleType loudness, const int receptive_field, const bool _bias, const std::vector<float>& params);
   void _process_core_() override;
 
 protected:
@@ -141,7 +144,6 @@ protected:
 };
 
 // NN modules =================================================================
-
 class Conv1D
 {
 public:
@@ -196,6 +198,6 @@ private:
 void verify_config_version(const std::string version);
 
 // Takes the model file and uses it to instantiate an instance of DSP.
-std::unique_ptr<DSP> get_dsp(const std::filesystem::path model_file);
+std::unique_ptr<DSP<double>> get_dsp(const std::filesystem::path model_file);
 // Legacy loader for directory-type DSPs
-std::unique_ptr<DSP> get_dsp_legacy(const std::filesystem::path dirname);
+std::unique_ptr<DSP<double>> get_dsp_legacy(const std::filesystem::path dirname);

@@ -18,11 +18,12 @@
 
 namespace recursive_linear_filter
 {
-class Base : public dsp::DSP
+template <typename SampleType>
+class Base : public dsp::DSP<SampleType>
 {
 public:
   Base(const size_t inputDegree, const size_t outputDegree);
-  double** Process(double** inputs, const size_t numChannels, const size_t numFrames) override;
+  SampleType** Process(SampleType** inputs, const size_t numChannels, const size_t numFrames) override;
 
 protected:
   // Methods
@@ -32,51 +33,54 @@ protected:
   void _PrepareBuffers(const size_t numChannels, const size_t numFrames) override;
 
   // Coefficients for the DSP filter
-  std::vector<double> mInputCoefficients;
-  std::vector<double> mOutputCoefficients;
+  std::vector<SampleType> mInputCoefficients;
+  std::vector<SampleType> mOutputCoefficients;
 
   // Arrays holding the history on which the filter depends recursively.
   // First index is channel
   // Second index, [0] is the current input/output, [1] is the previous, [2] is
   // before that, etc.
-  std::vector<std::vector<double>> mInputHistory;
-  std::vector<std::vector<double>> mOutputHistory;
+  std::vector<std::vector<SampleType>> mInputHistory;
+  std::vector<std::vector<SampleType>> mOutputHistory;
   // Indices for history.
   // Designates which index is currently "0". Use modulus to wrap around.
   long mInputStart;
   long mOutputStart;
 };
 
+template <typename SampleType>
 class LevelParams : public dsp::Params
 {
 public:
-  LevelParams(const double gain)
+  LevelParams(const SampleType gain)
   : Params()
   , mGain(gain){};
-  double GetGain() const { return this->mGain; };
+  SampleType GetGain() const { return this->mGain; };
 
 private:
   // The gain (multiplicative, i.e. not dB)
-  double mGain;
+  SampleType mGain;
 };
 
-class Level : public Base
+template <typename SampleType>
+class Level : public Base<SampleType>
 {
 public:
   Level()
-  : Base(1, 0){};
+  : Base<SampleType>(1, 0){};
   // Invalid usage: require a pointer to recursive_linear_filter::Params so
   // that SetCoefficients() is defined.
-  void SetParams(const LevelParams& params) { this->mInputCoefficients[0] = params.GetGain(); };
+  void SetParams(const LevelParams<SampleType>& params) { this->mInputCoefficients[0] = params.GetGain(); };
   ;
 };
 
 // The same 3 params (frequency, quality, gain) describe a bunch of filters.
 // (Low shelf, high shelf, peaking)
+template <typename SampleType>
 class BiquadParams : public dsp::Params
 {
 public:
-  BiquadParams(const double sampleRate, const double frequency, const double quality, const double gainDB)
+  BiquadParams(const SampleType sampleRate, const SampleType frequency, const SampleType quality, const SampleType gainDB)
   : dsp::Params()
   , mFrequency(frequency)
   , mGainDB(gainDB)
@@ -85,45 +89,49 @@ public:
 
   // Parameters defined in
   // https://webaudio.github.io/Audio-EQ-Cookbook/audio-eq-cookbook.html
-  double GetA() const { return pow(10.0, this->mGainDB / 40.0); };
-  double GetOmega0() const { return 2.0 * MATH_PI * this->mFrequency / this->mSampleRate; };
-  double GetAlpha(const double omega_0) const { return sin(omega_0) / (2.0 * this->mQuality); };
-  double GetCosW(const double omega_0) const { return cos(omega_0); };
+  SampleType GetA() const { return pow(10.0, this->mGainDB / 40.0); };
+  SampleType GetOmega0() const { return 2.0 * MATH_PI * this->mFrequency / this->mSampleRate; };
+  SampleType GetAlpha(const SampleType omega_0) const { return sin(omega_0) / (2.0 * this->mQuality); };
+  SampleType GetCosW(const SampleType omega_0) const { return cos(omega_0); };
 
 private:
-  double mFrequency;
-  double mGainDB;
-  double mQuality;
-  double mSampleRate;
+  SampleType mFrequency;
+  SampleType mGainDB;
+  SampleType mQuality;
+  SampleType mSampleRate;
 };
 
-class Biquad : public Base
+template <typename SampleType>
+class Biquad : public Base<SampleType>
 {
 public:
   Biquad()
-  : Base(3, 3){};
-  virtual void SetParams(const BiquadParams& params) = 0;
+  : Base<SampleType>(3, 3){};
+  virtual void SetParams(const BiquadParams<SampleType>& params) = 0;
 
 protected:
-  void _AssignCoefficients(const double a0, const double a1, const double a2, const double b0, const double b1,
-                           const double b2);
+  void _AssignCoefficients(const SampleType a0, const SampleType a1, const SampleType a2, const SampleType b0, const SampleType b1,
+                           const SampleType b2);
 };
 
-class LowShelf : public Biquad
+template <typename SampleType>
+class LowShelf : public Biquad<SampleType>
 {
 public:
-  void SetParams(const BiquadParams& params) override;
+  void SetParams(const BiquadParams<SampleType>& params) override;
 };
 
-class Peaking : public Biquad
+template <typename SampleType>
+class Peaking : public Biquad<SampleType>
 {
 public:
-  void SetParams(const BiquadParams& params) override;
+  void SetParams(const BiquadParams<SampleType>& params) override;
 };
 
-class HighShelf : public Biquad
+template <typename SampleType>
+class HighShelf : public Biquad<SampleType>
 {
 public:
-  void SetParams(const BiquadParams& params) override;
+  void SetParams(const BiquadParams<SampleType>& params) override;
 };
 }; // namespace recursive_linear_filter
