@@ -134,3 +134,9 @@ void dsp::History<SampleType>::_UpdateHistory(SampleType** inputs, const size_t 
     // Convert down to float here.
     this->mHistory[j] = (float)inputs[0][i];
 }
+
+template class dsp::DSP<double>;
+template class dsp::History<double>;
+
+template class dsp::DSP<float>;
+template class dsp::History<float>;

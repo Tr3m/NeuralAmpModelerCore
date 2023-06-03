@@ -312,3 +312,11 @@ Eigen::MatrixXf Conv1x1::process(const Eigen::MatrixXf& input) const
   else
     return this->_weight * input;
 }
+
+template class DSP<double>;
+template class Buffer<double>;
+template class Linear<double>;
+
+template class DSP<float>;
+template class Buffer<float>;
+template class Linear<float>;

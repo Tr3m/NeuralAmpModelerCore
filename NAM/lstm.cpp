@@ -114,3 +114,6 @@ float lstm::LSTM<SampleType>::_process_sample(const float x)
     this->_layers[i].process_(this->_layers[i - 1].get_hidden_state());
   return this->_head_weight.dot(this->_layers[this->_layers.size() - 1].get_hidden_state()) + this->_head_bias;
 }
+
+template class lstm::LSTM<double>;
+template class lstm::LSTM<float>;

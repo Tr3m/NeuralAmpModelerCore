@@ -202,3 +202,6 @@ void convnet::ConvNet<SampleType>::_reset_anti_pop_()
     receptive_field += this->_blocks[i].conv.get_dilation();
   this->_anti_pop_countdown = -receptive_field;
 }
+
+template class convnet::ConvNet<double>;
+template class convnet::ConvNet<float>;

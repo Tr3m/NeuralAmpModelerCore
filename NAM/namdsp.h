@@ -198,6 +198,8 @@ private:
 void verify_config_version(const std::string version);
 
 // Takes the model file and uses it to instantiate an instance of DSP.
-std::unique_ptr<DSP<double>> get_dsp(const std::filesystem::path model_file);
+template <typename SampleType>
+std::unique_ptr<DSP<SampleType>> get_dsp(const std::filesystem::path model_file);
 // Legacy loader for directory-type DSPs
-std::unique_ptr<DSP<double>> get_dsp_legacy(const std::filesystem::path dirname);
+template <typename SampleType>
+std::unique_ptr<DSP<SampleType>> get_dsp_legacy(const std::filesystem::path dirname);

@@ -168,3 +168,21 @@ void recursive_linear_filter::HighShelf<SampleType>::SetParams(const recursive_l
 
   this->_AssignCoefficients(a0, a1, a2, b0, b1, b2);
 }
+
+template class recursive_linear_filter::Base<double>;
+template class recursive_linear_filter::LevelParams<double>;
+template class recursive_linear_filter::Level<double>;
+template class recursive_linear_filter::BiquadParams<double>;
+template class recursive_linear_filter::Biquad<double>;
+template class recursive_linear_filter::LowShelf<double>;
+template class recursive_linear_filter::Peaking<double>;
+template class recursive_linear_filter::HighShelf<double>;
+
+template class recursive_linear_filter::Base<float>;
+template class recursive_linear_filter::LevelParams<float>;
+template class recursive_linear_filter::Level<float>;
+template class recursive_linear_filter::BiquadParams<float>;
+template class recursive_linear_filter::Biquad<float>;
+template class recursive_linear_filter::LowShelf<float>;
+template class recursive_linear_filter::Peaking<float>;
+template class recursive_linear_filter::HighShelf<float>;

@@ -54,7 +54,7 @@ SampleType** dsp::noise_gate::Trigger<SampleType>::Process(SampleType** inputs, 
     for (auto s = 0; s < numFrames; s++)
     {
       this->mLevel[c] =
-        std::clamp(alpha * this->mLevel[c] + beta * (inputs[c][s] * inputs[c][s]), MINIMUM_LOUDNESS_POWER, 1000.0);
+        std::clamp(alpha * this->mLevel[c] + beta * (inputs[c][s] * inputs[c][s]), SampleType(MINIMUM_LOUDNESS_POWER), SampleType(1000.0));
       const SampleType levelDB = _LevelToDB(this->mLevel[c]);
       if (this->mState[c] == dsp::noise_gate::Trigger<SampleType>::State::HOLDING)
       {
@@ -76,7 +76,7 @@ SampleType** dsp::noise_gate::Trigger<SampleType>::Process(SampleType** inputs, 
         const SampleType targetGainReduction = this->_GetGainReduction(levelDB);
         if (targetGainReduction > this->mLastGainReductionDB[c])
         {
-          const SampleType dGain = std::clamp(0.5 * (targetGainReduction - this->mLastGainReductionDB[c]), 0.0, dOpen);
+          const SampleType dGain = std::clamp(SampleType(0.5) * (targetGainReduction - this->mLastGainReductionDB[c]), SampleType(0.0), dOpen);
           this->mLastGainReductionDB[c] += dGain;
           if (this->mLastGainReductionDB[c] >= 0.0)
           {
@@ -87,7 +87,7 @@ SampleType** dsp::noise_gate::Trigger<SampleType>::Process(SampleType** inputs, 
         }
         else if (targetGainReduction < this->mLastGainReductionDB[c])
         {
-          const SampleType dGain = std::clamp(0.5 * (targetGainReduction - this->mLastGainReductionDB[c]), dClose, 0.0);
+          const SampleType dGain = std::clamp(SampleType(0.5) * (targetGainReduction - this->mLastGainReductionDB[c]), dClose, SampleType(0.0));
           this->mLastGainReductionDB[c] += dGain;
           if (this->mLastGainReductionDB[c] < maxGainReduction)
           {
@@ -182,3 +182,12 @@ SampleType** dsp::noise_gate::Gain<SampleType>::Process(SampleType** inputs, con
 
   return this->_GetPointers();
 }
+
+template class dsp::noise_gate::Gain<double>;
+template class dsp::noise_gate::Trigger<double>;
+template class dsp::noise_gate::TriggerParams<double>;
+
+
+template class dsp::noise_gate::Gain<float>;
+template class dsp::noise_gate::Trigger<float>;
+template class dsp::noise_gate::TriggerParams<float>;

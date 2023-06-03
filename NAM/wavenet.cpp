@@ -411,3 +411,6 @@ void wavenet::WaveNet<SampleType>::_reset_anti_pop_()
     receptive_field += this->_layer_arrays[i].get_receptive_field();
   this->_anti_pop_countdown = -receptive_field;
 }
+
+template class wavenet::WaveNet<double>;
+template class wavenet::WaveNet<float>;
