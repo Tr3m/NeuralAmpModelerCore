@@ -84,6 +84,9 @@ SampleType** dsp::noise_gate::Trigger<SampleType>::Process(SampleType** inputs, 
             this->mState[c] = dsp::noise_gate::Trigger<SampleType>::State::HOLDING;
             this->mTimeHeld[c] = 0.0;
           }
+          
+          if (levelDB > threshold)
+            gating = false;
         }
         else if (targetGainReduction < this->mLastGainReductionDB[c])
         {
@@ -93,6 +96,7 @@ SampleType** dsp::noise_gate::Trigger<SampleType>::Process(SampleType** inputs, 
           {
             this->mLastGainReductionDB[c] = maxGainReduction;
           }
+          gating = true;
         }
         this->mGainReductionDB[c][s] = this->mLastGainReductionDB[c];
       }
@@ -107,6 +111,12 @@ SampleType** dsp::noise_gate::Trigger<SampleType>::Process(SampleType** inputs, 
   for (auto c = 0; c < numChannels; c++)
     std::memcpy(this->mOutputs[c].data(), inputs[c], numFrames * sizeof(SampleType));
   return this->_GetPointers();
+}
+
+template <typename SampleType>
+bool dsp::noise_gate::Trigger<SampleType>::isGating()
+{
+  return gating;
 }
 
 template <typename SampleType>
