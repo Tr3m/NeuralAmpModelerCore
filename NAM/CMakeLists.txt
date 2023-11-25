@@ -1,4 +1,4 @@
-target_sources(NAM
+target_sources(${PROJECT_NAME}
 PRIVATE
     activations.cpp
     activations.h
