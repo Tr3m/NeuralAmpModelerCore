@@ -1,0 +1,17 @@
+target_sources(${PROJECT_NAME}
+PRIVATE
+    activations.cpp
+    activations.h
+    convnet.cpp
+    convnet.h
+    dsp.cpp
+    dsp.h
+    get_dsp.cpp
+    lstm.cpp
+    lstm.h
+    util.cpp
+    util.h
+    version.h
+    wavenet.cpp
+    wavenet.h
+)

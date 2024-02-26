@@ -1,4 +1,8 @@
-# NeuralAmpModelerCore
-Core DSP library for NAM plugins.
+# Overview
+A Repo that combines the [AudioDSPTools](https://github.com/sdatkinson/NeuralAmpModelerCore) and [NeuralAmpModelerCore](https://github.com/sdatkinson/AudioDSPTools) repos, with some minor modifications.
 
-For an example how to use, see [NeuralAmpModelerPlugin](https://github.com/sdatkinson/NeuralAmpModelerPlugin).
+## AudioDSPTools
+A library of basic DSP things.
+
+## NeuralAmpModelerCore
+Core DSP library for NAM plugins.
