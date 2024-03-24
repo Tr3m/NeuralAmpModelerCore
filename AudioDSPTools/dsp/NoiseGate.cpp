@@ -86,6 +86,9 @@ SampleType** namdsp::noise_gate::Trigger<SampleType>::Process(SampleType** input
             this->mState[c] = namdsp::noise_gate::Trigger<SampleType>::State::HOLDING;
             this->mTimeHeld[c] = 0.0;
           }
+
+          if (levelDB > threshold)
+            gating = false;
         }
         else if (targetGainReduction < this->mLastGainReductionDB[c])
         {
@@ -95,6 +98,7 @@ SampleType** namdsp::noise_gate::Trigger<SampleType>::Process(SampleType** input
           {
             this->mLastGainReductionDB[c] = maxGainReduction;
           }
+          gating = true;
         }
         this->mGainReductionDB[c][s] = this->mLastGainReductionDB[c];
       }

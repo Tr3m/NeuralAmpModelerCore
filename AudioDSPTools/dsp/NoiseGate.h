@@ -105,12 +105,16 @@ public:
     this->mGainListeners.insert(gain);
   }
 
+  bool isGating() { return gating; };
+
 private:
   enum class State
   {
     MOVING = 0,
     HOLDING
   };
+
+  bool gating {false};
 
   SampleType _GetGainReduction(const SampleType levelDB) const
   {
