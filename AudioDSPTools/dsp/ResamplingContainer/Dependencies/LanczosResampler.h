@@ -203,7 +203,11 @@ public:
      */
     auto res = A + 1.0 - (mPhaseIn - mPhaseOut - mPhaseOutIncr * nOutputSamples);
 
+    #if defined(__unix__) || (defined(__apple__))
     return static_cast<size_t>(std::max(res + 1.0, 0.0));
+    #else
+    return static_cast<size_t>(max(res + 1.0, 0.0));
+    #endif
   }
 
   inline void PushBlock(T** inputs, size_t nFrames)
