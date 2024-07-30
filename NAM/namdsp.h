@@ -6,7 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-
+#include <sstream>
 #include <Eigen/Dense>
 
 #include "activations.h"
@@ -203,3 +203,6 @@ std::unique_ptr<DSP<SampleType>> get_dsp(const std::filesystem::path model_file)
 // Legacy loader for directory-type DSPs
 template <typename SampleType>
 std::unique_ptr<DSP<SampleType>> get_dsp_legacy(const std::filesystem::path dirname);
+
+template <typename SampleType>
+std::unique_ptr<DSP<SampleType>> get_dsp_stream(const std::string& raw_json);
